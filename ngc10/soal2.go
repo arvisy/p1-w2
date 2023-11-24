@@ -84,7 +84,3 @@ func calculator() {
 
 	fmt.Printf("Hasil %s %.2f dan %.2f adalah %.2f\n", operator, a, b, result)
 }
-
-func main() {
-	calculator()
-}

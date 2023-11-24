@@ -1,0 +1,6 @@
+[INFO] This is an informational message.
+[ERROR] An error occurred while processing the request.
+[DEBUG] Processing request with ID: 12345
+[INFO] Another informational message.
+[ERROR] Yet another error.
+[ERROR] One more error.

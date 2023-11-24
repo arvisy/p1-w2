@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	"ngc8/channel"
+	"ngc/ngc8/channel"
+	"sync"
 )
 
 func main() {
@@ -22,48 +23,39 @@ func main() {
 	// fmt.Printf("Perbedaan kalkulasi:\n(a) Jumlah kuadrat: %d\n(b) Kuadrat jumlah: %d\n", sumSquare, squareSum)
 
 	// CHANNEL 3
-	rectChannel := make(chan channel.Shape)
-	circleChannel := make(chan channel.Shape)
-	triangleChannel := make(chan channel.Shape)
+	// input := []channel.Shape{
+	// 	{ShapeType: "RECTANGLE", Length: 5},
+	// 	{ShapeType: "CIRCLE", Length: 3},
+	// 	{ShapeType: "TRIANGLE", Length: 5},
+	// 	{ShapeType: "RECTANGLE", Length: 15},
+	// 	{ShapeType: "CIRCLE", Length: 5},
+	// }
 
-	input := []channel.Shape{
-		{ShapeType: channel.RECTANGLE, Length: 5},
-		{ShapeType: channel.CIRCLE, Length: 3},
-		{ShapeType: channel.TRIANGLE, Length: 5},
-		{ShapeType: channel.RECTANGLE, Length: 15},
-		{ShapeType: channel.CIRCLE, Length: 5},
+	// channel.ProcessShapes(input)
+
+	// THEMES 1
+	// numbers := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+
+	// sum := channel.CalculateSumOfSquares(numbers)
+
+	// fmt.Printf("Sum of squares: %d\n", sum)
+
+	// THEMES 2
+	filenames := []string{"file1.txt", "file2.txt", "file3.txt"}
+	var wg sync.WaitGroup
+	resultChan := make(chan string, len(filenames))
+
+	for _, filename := range filenames {
+		wg.Add(1)
+		go channel.CountWords(filename, &wg, resultChan)
 	}
 
 	go func() {
-		for _, shape := range input {
-			switch shape.ShapeType {
-			case channel.RECTANGLE:
-				rectChannel <- shape
-			case channel.CIRCLE:
-				rectChannel <- shape
-			case channel.TRIANGLE:
-				rectChannel <- shape
-			}
-		}
-
-		close(rectChannel)
-		close(circleChannel)
-		close(triangleChannel)
+		wg.Wait()
+		close(resultChan)
 	}()
 
-	go channel.CalculateArea(rectChannel)
-	go channel.CalculateArea(circleChannel)
-	go channel.CalculateArea(triangleChannel)
-
-	for i := 0; i < len(input); i++ {
-		select {
-		case rect := <-rectChannel:
-			fmt.Printf("Rectangle with length %d has area: %f\n", rect.Length, rect.Area)
-		case circle := <-circleChannel:
-			fmt.Printf("Circle with radius %d has area: %f\n", circle.Length, circle.Area)
-		case triangle := <-triangleChannel:
-			fmt.Printf("Triangle with base %d has area: %f\n", triangle.Length, triangle.Area)
-		}
+	for result := range resultChan {
+		fmt.Println(result)
 	}
-
 }

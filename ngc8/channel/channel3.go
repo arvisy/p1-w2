@@ -1,29 +1,59 @@
 package channel
 
-import "math"
+import (
+	"fmt"
+	"math"
+	"sync"
+)
 
 const (
-	RECTANGLE = "rectangle"
-	CIRCLE    = "circle"
-	TRIANGLE  = "triangle"
+	RECTANGLE = "RECTANGLE"
+	CIRCLE    = "CIRCLE"
+	TRIANGLE  = "TRIANGLE"
 )
 
 type Shape struct {
-	ShapeType string
-	Length    int
+	ShapeType string // Circle/Rectangle
+	Length    float32
 	Area      float32
 }
 
-func CalculateArea(ch chan Shape) {
-	for shape := range ch {
+func CalculateArea(shape *Shape, resultChan chan<- Shape, wg *sync.WaitGroup) {
+	defer wg.Done()
+	switch shape.ShapeType {
+	case RECTANGLE:
+		shape.Area = shape.Length * shape.Length
+	case CIRCLE:
+		shape.Area = math.Pi * shape.Length * shape.Length
+	case TRIANGLE:
+		shape.Area = 0.5 * shape.Length * shape.Length
+	}
+	resultChan <- *shape
+}
+
+func ProcessShapes(input []Shape) {
+	resultChan := make(chan Shape, len(input)) // Menggunakan buffered channel
+
+	var wg sync.WaitGroup
+
+	for _, shape := range input {
+		wg.Add(1)
 		switch shape.ShapeType {
 		case RECTANGLE:
-			shape.Area = float32(shape.Length) * float32(shape.Length)
+			go CalculateArea(&shape, resultChan, &wg)
 		case CIRCLE:
-			shape.Area = math.Pi * float32(shape.Length) * float32(shape.Length)
+			go CalculateArea(&shape, resultChan, &wg)
 		case TRIANGLE:
-			shape.Area = 0.5 * float32(shape.Length) * float32(shape.Length)
+			go CalculateArea(&shape, resultChan, &wg)
 		}
-		ch <- shape
+	}
+
+	go func() {
+		wg.Wait()
+		close(resultChan)
+	}()
+
+	for s := range resultChan {
+		fmt.Printf("Shape: %s, Area: %f\n", s.ShapeType, s.Area)
 	}
 }
